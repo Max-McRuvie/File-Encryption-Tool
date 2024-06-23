@@ -1,3 +1,4 @@
+#include "../resources/resource.h"
 #include <windows.h>
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -21,7 +22,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 500, 400,
+        CW_USEDEFAULT, CW_USEDEFAULT, 400, 300,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -48,8 +49,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    static HWND hwndEncryptButton, hwndDecryptButton;
 
     switch (message) {
+        case WM_CREATE:
+            hwndEncryptButton = CreateWindow(
+            "BUTTON",
+            "Encrypt",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            90, 200, 100, 30,
+            hWnd,
+            (HMENU)ID_BUTTON_ENCRYPT,
+            (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
+            NULL
+        );
+
+         hwndDecryptButton = CreateWindow(
+            "BUTTON",
+            "Decrypt",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            200, 200, 100, 30,
+            hWnd,
+            (HMENU)ID_BUTTON_DECRYPT,
+            (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
+            NULL
+        );
+        break;
 
         case WM_DESTROY:
             PostQuitMessage(0);
