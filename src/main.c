@@ -1,86 +1,129 @@
-#include "../resources/resource.h"
 #include <windows.h>
+#include <tchar.h>
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+#define MAX_LOADSTRING 100
+#define ID_BUTTON_ENCRYPT 1
+#define ID_BUTTON_DECRYPT 2
+
+// Global variables
+HINSTANCE hInst;
+TCHAR szTitle[MAX_LOADSTRING] = _T("Sample Window");
+TCHAR szWindowClass[MAX_LOADSTRING] = _T("SampleWindowClass");
+
+// Function prototypes
+ATOM MyRegisterClass(HINSTANCE hInstance);
+BOOL InitInstance(HINSTANCE, int);
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    static HWND hwndEncryptButton, hwndDecryptButton;
+
+    switch (message) {            
+        case WM_CREATE:
+            hwndEncryptButton = CreateWindow(
+                TEXT("BUTTON"),
+                TEXT("Encrypt"),
+                WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+                90, 320, 100, 30,
+                hWnd,
+                (HMENU)ID_BUTTON_ENCRYPT,
+                hInst,
+                NULL
+            );
+
+            hwndDecryptButton = CreateWindow(
+                TEXT("BUTTON"),
+                TEXT("Decrypt"),
+                WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+                200, 320, 100, 30,
+                hWnd,
+                (HMENU)ID_BUTTON_DECRYPT,
+                hInst,
+                NULL
+            );
+            break;
+
+        case WM_COMMAND:
+            switch (LOWORD(wParam)) {
+                case ID_BUTTON_ENCRYPT:
+                    MessageBox(hWnd, TEXT("Encrypt button clicked"), TEXT("Info"), MB_OK | MB_ICONINFORMATION);
+                    break;
+
+                case ID_BUTTON_DECRYPT:
+                    MessageBox(hWnd, TEXT("Decrypt button clicked"), TEXT("Info"), MB_OK | MB_ICONINFORMATION);
+                    break;
+            }
+            break;
+
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+    return 0;
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    // Register the window class
-    const char CLASS_NAME[] = "Sample Window Class";
+    MyRegisterClass(hInstance);
 
-    WNDCLASS wc = { };
-    wc.lpfnWndProc = WndProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = CLASS_NAME;
-
-    RegisterClass(&wc);
-
-    // Create the window
-    HWND hWnd = CreateWindowEx(
-        0,                              // Optional window styles
-        CLASS_NAME,                     // Window class
-        "Sample Window",                // Window title
-        WS_OVERLAPPEDWINDOW,            // Window style
-
-        // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 400, 300,
-
-        NULL,       // Parent window    
-        NULL,       // Menu
-        hInstance,  // Instance handle
-        NULL        // Additional application data
-    );
-
-    if (hWnd == NULL) {
-        MessageBox(NULL, "CreateWindowEz failed!", "Error", MB_OK);
-        return 0;
+    if (!InitInstance(hInstance, nCmdShow)) {
+        MessageBox(NULL, TEXT("Window Initialization Failed!"), TEXT("Error"), MB_ICONERROR);
+        return 1;
     }
 
-    ShowWindow(hWnd, nCmdShow);
-    UpdateWindow(hWnd);
-
-    // Run the message loop
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    return msg.wParam;
+    return (int)msg.wParam;
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    static HWND hwndEncryptButton, hwndDecryptButton;
+ATOM MyRegisterClass(HINSTANCE hInstance) {
+    WNDCLASSEX wc = { 0 };
 
-    switch (message) {
-        case WM_CREATE:
-            hwndEncryptButton = CreateWindow(
-            "BUTTON",
-            "Encrypt",
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-            90, 200, 100, 30,
-            hWnd,
-            (HMENU)ID_BUTTON_ENCRYPT,
-            (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
-            NULL
-        );
+    wc.cbSize        = sizeof(WNDCLASSEX);
+    wc.style         = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc   = WndProc;
+    wc.cbClsExtra    = 0;
+    wc.cbWndExtra    = 0;
+    wc.hInstance     = hInstance;
+    wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.lpszMenuName  = NULL;
+    wc.lpszClassName = szWindowClass;
+    wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 
-         hwndDecryptButton = CreateWindow(
-            "BUTTON",
-            "Decrypt",
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-            200, 200, 100, 30,
-            hWnd,
-            (HMENU)ID_BUTTON_DECRYPT,
-            (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
-            NULL
-        );
-        break;
-
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            break;
-        default:
-            return DefWindowProc(hWnd, message, wParam, lParam);
+    ATOM result = RegisterClassEx(&wc);
+    if (!result) {
+        DWORD error = GetLastError();
+        TCHAR buffer[256];
+        _stprintf(buffer, _T("RegisterClassEx Failed! Error code: %lu"), error);
+        MessageBox(NULL, buffer, TEXT("Error"), MB_ICONERROR);
     }
-    return 0;
+    return result;
+}
+
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
+    hInst = hInstance;
+
+    HWND hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, 0, 400, 400, NULL, NULL, hInstance, NULL);
+
+    if (!hWnd) {
+        DWORD error = GetLastError();
+        TCHAR buffer[256];
+        _stprintf(buffer, _T("CreateWindow Failed! Error code: %lu"), error);
+        MessageBox(NULL, buffer, TEXT("Error"), MB_ICONERROR);
+        return FALSE;
+    }
+
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
+
+    return TRUE;
 }
